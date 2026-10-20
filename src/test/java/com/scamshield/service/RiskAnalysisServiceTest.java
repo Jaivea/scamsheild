@@ -1,56 +1,59 @@
 package com.scamshield.service;
 
+import junit.framework.TestCase;
 import com.scamshield.model.RiskAssessment;
-import org.junit.Before;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-public class RiskAnalysisServiceTest {
+public class RiskAnalysisServiceTest extends TestCase {
 
     private RiskAnalysisService service;
 
-    @Before
-    public void setUp() {
+    @Override
+    protected void setUp() {
         service = new RiskAnalysisService();
     }
 
-    @Test
-    public void emptyInputShouldBeRejected() {
+    public void testEmptyInputRejected() {
         try {
-            service.analyze(" ");
+            service.analyze("");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException exception) {
             assertEquals(
                 "Please enter a message or URL.",
-                e.getMessage()
+                exception.getMessage()
             );
         }
     }
 
-    @Test
-    public void ordinaryMessageShouldHaveLowRisk() {
+    public void testOrdinaryTextHasLowRisk() {
         RiskAssessment result =
             service.analyze("Hello, how are you?");
 
-        assertEquals("LOW", result.getRiskLevel());
         assertEquals(0, result.getScore());
+        assertEquals("LOW", result.getRiskLevel());
     }
 
-    @Test
-    public void urgentLanguageShouldIncreaseRisk() {
-        RiskAssessment result =
-            service.analyze("URGENT! Please act now.");
+    public void testUrgentLanguageDetected() {
+        RiskAssessment result = service.analyze("Act now");
 
         assertEquals(25, result.getScore());
         assertEquals("LOW", result.getRiskLevel());
+        assertTrue(
+            result.getReasons().contains("Uses urgent language.")
+        );
     }
 
-    @Test
-    public void suspiciousTestLinkShouldHaveHighRisk() {
+    public void testSuspiciousTestUrl() {
+        RiskAssessment result =
+            service.analyze("http://secure-bank-kyc.example.test");
+
+        assertEquals(70, result.getScore());
+        assertEquals("HIGH", result.getRiskLevel());
+    }
+
+    public void testHighRiskClassification() {
         RiskAssessment result = service.analyze(
-            "URGENT! Your bank account is blocked. " +
-            "Verify your KYC immediately at " +
+            "Urgent! Your account is blocked. " +
+            "Verify your KYC at " +
             "http://secure-bank-kyc.example.test"
         );
 
@@ -58,23 +61,14 @@ public class RiskAnalysisServiceTest {
         assertEquals("HIGH", result.getRiskLevel());
     }
 
-    @Test
-    public void scoreShouldNotExceedOneHundred() {
+    public void testScoreNeverExceeds100() {
         RiskAssessment result = service.analyze(
-            "URGENT! Act now. Your account is blocked. " +
-            "Verify your KYC and password at " +
-            "http://secure-bank-kyc.example.test"
+            "Urgent, act now! Verify your password, OTP, " +
+            "CVV, PIN and KYC. Your account is blocked. " +
+            "Claim reward at http://secure-bank-kyc.example.test"
         );
 
-        assertTrue(result.getScore() <= 100);
         assertTrue(result.getScore() >= 0);
-    }
-
-    @Test
-    public void resultShouldContainWarningReasons() {
-        RiskAssessment result =
-            service.analyze("Verify your KYC immediately.");
-
-        assertFalse(result.getReasons().isEmpty());
+        assertTrue(result.getScore() <= 100);
     }
 }

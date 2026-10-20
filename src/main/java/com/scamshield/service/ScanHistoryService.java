@@ -4,9 +4,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scamshield.model.RiskAssessment;
 import com.scamshield.model.ScanResult;
+
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -25,19 +32,38 @@ public class ScanHistoryService {
             String reasonsJson =
                     mapper.writeValueAsString(assessment.getReasons());
 
-            jdbc.update(
-                    "INSERT INTO scans(content, score, risk_level, reasons) VALUES (?, ?, ?, ?)",
-                    content,
-                    assessment.getScore(),
-                    assessment.getRiskLevel(),
-                    reasonsJson
-            );
+            String sql =
+                    "INSERT INTO scans(content, score, risk_level, reasons) " +
+                    "VALUES (?, ?, ?, ?)";
 
-            Long id = jdbc.queryForObject(
-                    "SELECT last_insert_rowid()", Long.class
-            );
+            KeyHolder keyHolder = new GeneratedKeyHolder();
 
-            return findById(id);
+            PreparedStatementCreator creator = (Connection connection) -> {
+                PreparedStatement statement =
+                        connection.prepareStatement(
+                                sql,
+                                Statement.RETURN_GENERATED_KEYS
+                        );
+
+                statement.setString(1, content);
+                statement.setInt(2, assessment.getScore());
+                statement.setString(3, assessment.getRiskLevel());
+                statement.setString(4, reasonsJson);
+
+                return statement;
+            };
+
+            jdbc.update(creator, keyHolder);
+
+            Number generatedId = keyHolder.getKey();
+
+            if (generatedId == null) {
+                throw new IllegalStateException(
+                        "Could not determine the saved scan ID."
+                );
+            }
+
+            return findById(generatedId.longValue());
 
         } catch (Exception e) {
             throw new IllegalStateException(
@@ -49,10 +75,12 @@ public class ScanHistoryService {
     public ScanResult findById(long id) {
         try {
             return jdbc.queryForObject(
-                    "SELECT id, content, score, risk_level, reasons, scanned_at FROM scans WHERE id = ?",
+                    "SELECT id, content, score, risk_level, reasons, scanned_at " +
+                    "FROM scans WHERE id = ?",
                     (rs, rowNum) -> {
-                        List<String> reasons = parseReasons(rs.getString("reasons"));
-                        
+                        List<String> reasons =
+                                parseReasons(rs.getString("reasons"));
+
                         return new ScanResult(
                                 rs.getLong("id"),
                                 rs.getString("content"),
@@ -75,9 +103,11 @@ public class ScanHistoryService {
     public List<ScanResult> findAll() {
         try {
             return jdbc.query(
-                    "SELECT id, content, score, risk_level, reasons, scanned_at FROM scans ORDER BY id DESC LIMIT 100",
+                    "SELECT id, content, score, risk_level, reasons, scanned_at " +
+                    "FROM scans ORDER BY id DESC LIMIT 100",
                     (rs, rowNum) -> {
-                        List<String> reasons = parseReasons(rs.getString("reasons"));
+                        List<String> reasons =
+                                parseReasons(rs.getString("reasons"));
 
                         return new ScanResult(
                                 rs.getLong("id"),
@@ -100,22 +130,23 @@ public class ScanHistoryService {
     public Map<String, Object> analytics() {
         return jdbc.queryForMap(
                 "SELECT COUNT(*) AS total, " +
-                "COALESCE(SUM(CASE WHEN risk_level='HIGH' THEN 1 ELSE 0 END),0) AS high, " +
-                "COALESCE(SUM(CASE WHEN risk_level='MEDIUM' THEN 1 ELSE 0 END),0) AS medium, " +
-                "COALESCE(SUM(CASE WHEN risk_level='LOW' THEN 1 ELSE 0 END),0) AS low " +
+                "COALESCE(SUM(CASE WHEN risk_level = 'HIGH' THEN 1 ELSE 0 END), 0) AS high, " +
+                "COALESCE(SUM(CASE WHEN risk_level = 'MEDIUM' THEN 1 ELSE 0 END), 0) AS medium, " +
+                "COALESCE(SUM(CASE WHEN risk_level = 'LOW' THEN 1 ELSE 0 END), 0) AS low " +
                 "FROM scans"
         );
     }
-    
+
     private List<String> parseReasons(String json) {
         try {
             return mapper.readValue(
-                json,
-                new TypeReference<List<String>>() {}
+                    json,
+                    new TypeReference<List<String>>() {}
             );
+
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new IllegalStateException(
-                "Could not parse scan reasons.", e
+                    "Could not parse scan reasons.", e
             );
         }
     }

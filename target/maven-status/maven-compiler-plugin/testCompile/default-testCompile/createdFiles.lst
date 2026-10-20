@@ -1,1 +1,5 @@
+com\scamshield\controller\ScanControllerTest$1.class
 com\scamshield\service\RiskAnalysisServiceTest.class
+com\scamshield\service\ScanHistoryServiceTest.class
+com\scamshield\controller\ScanControllerTest.class
+com\scamshield\service\WarningSignDetectionTest.class
