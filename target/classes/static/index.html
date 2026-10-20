@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScamShield | Scam Detection</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-icon">S</span>
+            <div>
+                <h1>ScamShield</h1>
+                <p>Online Scam & Phishing Detection</p>
+            </div>
+        </div>
+        <span class="status">● Protection Dashboard</span>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">YOUR DIGITAL SAFETY ASSISTANT</p>
+            <h2>Think before you <span>click.</span></h2>
+            <p>Check suspicious messages and links for common scam warning signs.</p>
+        </section>
+
+        <section class="scan-card">
+            <div class="section-heading">
+                <div>
+                    <h2>Scan a message or URL</h2>
+                    <p>Paste suspicious content below to analyze it.</p>
+                </div>
+                <span class="shield">🛡️</span>
+            </div>
+
+            <form id="scanForm">
+                <label for="content">Message or URL</label>
+                <textarea
+                    id="content"
+                    name="content"
+                    maxlength="5000"
+                    placeholder="Example: URGENT! Your bank account is blocked. Verify your KYC immediately at http://secure-bank-kyc.example.test"
+                    required></textarea>
+
+                <div class="input-footer">
+                    <span>Maximum 5,000 characters</span>
+                    <span id="charCount">0 / 5000</span>
+                </div>
+
+                <button type="submit" id="scanButton">
+                    Analyze content →
+                </button>
+                <p id="message" role="status"></p>
+            </form>
+        </section>
+
+        <section id="resultSection" class="result-card hidden">
+            <h2>Scan Results</h2>
+            <div class="result-summary">
+                <div>
+                    <p class="muted">Risk score</p>
+                    <p class="score"><span id="score">0</span><small>/100</small></p>
+                </div>
+                <div>
+                    <p class="muted">Risk level</p>
+                    <span id="riskLevel" class="risk-badge">LOW</span>
+                </div>
+            </div>
+
+            <h3>Detected warning signs</h3>
+            <ul id="reasons"></ul>
+            <p class="disclaimer">
+                This tool checks configured warning signs. It cannot guarantee
+                whether a message or website is safe or fraudulent.
+            </p>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="stat-card">
+                <p>Total scans</p>
+                <h2 id="totalScans">0</h2>
+            </div>
+            <div class="stat-card high-stat">
+                <p>High risk</p>
+                <h2 id="highScans">0</h2>
+            </div>
+            <div class="stat-card medium-stat">
+                <p>Medium risk</p>
+                <h2 id="mediumScans">0</h2>
+            </div>
+            <div class="stat-card low-stat">
+                <p>Low risk</p>
+                <h2 id="lowScans">0</h2>
+            </div>
+        </section>
+
+        <section class="history-card">
+            <div class="section-heading">
+                <div>
+                    <h2>Recent scan history</h2>
+                    <p>Your latest 100 scans</p>
+                </div>
+                <button type="button" id="refreshButton" class="secondary-button">
+                    Refresh
+                </button>
+            </div>
+
+            <div id="historyList" class="history-list">
+                <p class="muted">Loading scan history...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>ScamShield · Educational software testing project</p>
+        <p>Risk scores are rule-based estimates, not verified fraud verdicts.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

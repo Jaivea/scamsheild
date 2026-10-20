@@ -1,0 +1,8 @@
+com\scamshield\controller\ScanController.class
+com\scamshield\service\ScanHistoryService.class
+com\scamshield\service\RiskAnalysisService.class
+com\scamshield\ScamShieldApplication.class
+com\scamshield\model\RiskAssessment.class
+com\scamshield\model\ScanRequest.class
+com\scamshield\service\ScanHistoryService$1.class
+com\scamshield\model\ScanResult.class
